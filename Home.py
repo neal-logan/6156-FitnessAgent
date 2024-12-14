@@ -10,7 +10,7 @@ client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 st.set_page_config(layout="wide")
 
 # Header
-title = "myfitnessagent"
+title = "MySupportAgent"
 logo_path = "logo.png"
 
 col1, col2 = st.columns([1, 10])
@@ -41,23 +41,24 @@ if "training_tracker" not in st.session_state:
 
 # Function to extract tracker tags from response
 def parse_messages(text):
+
     message_pattern = r"<message>(.*?)</message>"
-    nutrition_pattern = r"<nutrition_plan>(.*?)</nutrition_plan>"
-    training_pattern = r"<training_plan>(.*?)</training_plan>"
+    product_pattern = r"<product>(.*?)</product>"
+    issue_pattern = r"<issue>(.*?)</issue>"
 
     message = re.findall(message_pattern, text, re.DOTALL)
-    nutrition = re.findall(nutrition_pattern, text, re.DOTALL)
-    training = re.findall(training_pattern, text, re.DOTALL)
+    product = re.findall(product_pattern, text, re.DOTALL)
+    issue = re.findall(issue_pattern, text, re.DOTALL)
 
-    return message[0] if message else "", nutrition[
-        0] if nutrition else "", training[0] if training else ""
+    return message[0] if message else "", product[
+        0] if product else "", issue[0] if issue else ""
 
 
 # Create two columns
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.header("Chat with coach")
+    st.header("Chat with Support")
 
     # Create a container for chat messages
     chat_container = st.container(height=400)
@@ -98,11 +99,11 @@ with col1:
                             "Uploaded a photo of food"
                         })
 
-                        message, nutrition_tracker = call_image_model(
+                        message, product_tracker = call_image_model(
                             client, uploaded_file)
 
-                        if nutrition_tracker:
-                            st.session_state.nutrition_tracker = nutrition_tracker
+                        if product_tracker:
+                            st.session_state.nutrition_tracker = product_tracker
 
                         st.session_state.internal_messages.append({
                             "role":
@@ -158,7 +159,7 @@ with col1:
                         response
                     })
 
-                    message, nutrition_tracker, training_tracker = parse_messages(
+                    message, product_tracker, issue_tracker = parse_messages(
                         response)
 
                     # add parsed message to external messages
@@ -170,22 +171,24 @@ with col1:
                     })
 
                     # Update session state trackers
-                    if nutrition_tracker:
-                        st.session_state.nutrition_tracker = nutrition_tracker
-                    if training_tracker:
-                        st.session_state.training_tracker = training_tracker
+                    if product_tracker:
+                        st.session_state.nutrition_tracker = product_tracker
+                    if issue_tracker:
+                        st.session_state.training_tracker = issue_tracker
                     st.rerun()
 
 with col2:
-    st.header("Training and Nutrition Log")
-    training_log_container = st.container(height=260)
-    with training_log_container:
-        st.write("### Training Plan")
+    st.header("Support Ticket Information")
+    product_log_container = st.container(height=260)
+    with product_log_container:
+        st.write("### Product")
+        if len(st.session_state.nutrition_tracker) > 0:
+            st.write(st.session_state.nutrition_tracker)
+
+    issue_log_container = st.container(height=260)
+    with issue_log_container:
+        st.write("### Issue")
         if len(st.session_state.training_tracker) > 0:
             st.write(st.session_state.training_tracker)
 
-    nutrition_log_container = st.container(height=260)
-    with nutrition_log_container:
-        st.write("### Nutrition Plan")
-        if len(st.session_state.nutrition_tracker) > 0:
-            st.write(st.session_state.nutrition_tracker)
+    
